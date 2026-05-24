@@ -112,7 +112,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     try {
       // 2. fetch the user data from the API
-      final response = await _dio.get('auth/me');
+      final response = await _dio.get('/auth/me');
       final user = UserModel.fromJson(response.data);
 
       // 3. fetch the user role
