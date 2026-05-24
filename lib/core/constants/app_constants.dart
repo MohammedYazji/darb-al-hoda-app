@@ -2,8 +2,7 @@ class AppConstants {
   //private we can't make instance from this class just access static methods and proprieties
   AppConstants._();
 
-  // === API ===
-  static const String baseUrl = 'http://darb-al-hoda-api.test/api';
+  static const String baseUrl = 'http://127.0.0.1:8000/api';
 
   // === Storage Keys ===
   static const String tokenKey = 'auth_token';
