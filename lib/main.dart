@@ -1,6 +1,6 @@
 import 'package:darb_al_hoda_app/core/constants/app_colors.dart';
-import 'package:darb_al_hoda_app/core/constants/app_text_styles.dart';
 import 'package:darb_al_hoda_app/features/auth/presentation/screens/role_selection_screen.dart';
+import 'package:darb_al_hoda_app/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
@@ -74,11 +74,7 @@ class _DarbAlHodaAppState extends ConsumerState<DarbAlHodaApp> {
       return const RoleSelectionScreen();
     }
 
-    // 4. if user has one role - Temp Screen
-    return Scaffold(
-      body: Center(
-        child: Text('مرحباً ${authState.user!.name}', style: AppTextStyles.h2),
-      ),
-    );
+    // 4. else render the dashboard
+    return const DashboardScreen();
   }
 }
