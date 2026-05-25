@@ -1,4 +1,3 @@
-import 'package:darb_al_hoda_app/features/auth/presentation/screens/role_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -43,9 +42,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _emailController.text.trim(), // remove the spaces
           _passwordController.text,
         );
-
-    // 3. after login process read the state
-    final authState = ref.read(authProvider);
   }
 
   @override
