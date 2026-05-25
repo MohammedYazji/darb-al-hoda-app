@@ -116,31 +116,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   // === Header ===
   Widget _buildHeader(String name, dashboard) {
-    final now = DateTime.now();
-    final days = [
-      'الاثنين',
-      'الثلاثاء',
-      'الأربعاء',
-      'الخميس',
-      'الجمعة',
-      'السبت',
-      'الأحد',
-    ];
-    final months = [
-      'يناير',
-      'فبراير',
-      'مارس',
-      'إبريل',
-      'مايو',
-      'يونيو',
-      'يوليو',
-      'أغسطس',
-      'سبتمبر',
-      'أكتوبر',
-      'نوفمبر',
-      'ديسمبر',
-    ];
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 56, 20, 20),
@@ -181,8 +156,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ),
               Text(
-                // TODO: refactor this into separate Helper function
-                '${days[now.weekday - 1]} ${now.day} ${months[now.month - 1]}',
+                _getTodayDate(),
                 style: AppTextStyles.caption.copyWith(
                   color: Colors.white.withValues(alpha: 0.7),
                 ),
@@ -375,5 +349,34 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         Text(label, style: AppTextStyles.caption),
       ],
     );
+  }
+
+  //  === Helper ===
+  String _getTodayDate() {
+    final now = DateTime.now();
+    final days = [
+      'الاثنين',
+      'الثلاثاء',
+      'الأربعاء',
+      'الخميس',
+      'الجمعة',
+      'السبت',
+      'الأحد',
+    ];
+    final months = [
+      'يناير',
+      'فبراير',
+      'مارس',
+      'إبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر',
+    ];
+    return '${days[now.weekday - 1]} ${now.day} ${months[now.month - 1]}';
   }
 }
