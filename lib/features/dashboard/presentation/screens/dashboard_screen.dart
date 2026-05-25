@@ -105,8 +105,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           // === Total memorized ===
           _buildMemorizationCard(data),
 
-          // === The current target ===
-          _buildCurrentGoalCard(data),
+          // === The Ranking Cards ===
+          _buildRankingCards(data),
+
+          // === Attendance Card ===
+          _buildAttendanceCard(data),
 
           const SizedBox(height: 24),
         ],
@@ -115,7 +118,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   // === Header ===
-  Widget _buildHeader(String name, dashboard) {
+  Widget _buildHeader(String name, DashboardModel data) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 56, 20, 20),
@@ -174,31 +177,47 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.primary.withValues(alpha: 0.9), AppColors.primary],
-        ),
+        color: AppColors.primary.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          const Text('🤖', style: TextStyle(fontSize: 24)),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.gold.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Text('🤖', style: TextStyle(fontSize: 24)),
+          ),
+
           const SizedBox(width: 12),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'رسالة المحفّز الذكي',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.gold,
-                    fontWeight: FontWeight.w700,
-                  ),
+                Row(
+                  children: [
+                    const Text('🌟', style: TextStyle(fontSize: 12)),
+                    const SizedBox(width: 4),
+                    Text(
+                      'رسالة المحفّز الذكي',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.gold,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 // TODO: hard coded for now
                 Text(
-                  'يا يوسف, كريم يتقدم عليك ب5 صفحات فقط! واصل الحفظ',
-                  style: AppTextStyles.bodySmall.copyWith(color: Colors.white),
+                  'يا يوسف، كريم يتقدم عليك بـ5 صفحات فقط! واصل الحفظ إن شاء الله 💚',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: Colors.white,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -234,14 +253,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
           // === Circular Progress ===
           SizedBox(
-            width: 140,
-            height: 140,
+            width: 160,
+            height: 160,
             child: Stack(
               alignment: Alignment.center,
               children: [
                 CircularProgressIndicator(
                   value: progress,
-                  strokeWidth: 10,
+                  strokeWidth: 12,
                   backgroundColor: Colors.grey.shade100,
                   valueColor: const AlwaysStoppedAnimation(AppColors.primary),
                 ),
@@ -252,7 +271,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       '${student.memorized}',
                       style: AppTextStyles.h1.copyWith(
                         color: AppColors.primary,
-                        fontSize: 36,
+                        fontSize: 40,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -266,6 +285,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const SizedBox(height: 20),
 
           // === Stats ===
+          // TODO: page and ayah not accurate cause not each juz equal 20 page
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -275,18 +295,99 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               _buildStat('${student.memorized * 200}', 'آية'),
             ],
           ),
+          const SizedBox(height: 20),
+
+          // === Current Goal Card ===
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F0),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.menu_book_outlined,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'الهدف الحالي: الجزء ${student.memorized + 1}',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 80,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: 0.7,
+                      backgroundColor: Colors.grey.shade200,
+                      valueColor: const AlwaysStoppedAnimation(
+                        AppColors.primary,
+                      ),
+                      minHeight: 6,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '70%',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // === Current Goal Card ===
-  Widget _buildCurrentGoalCard(DashboardModel dashboard) {
-    final nextJuz = dashboard.student.memorized + 1;
-    final progress = 0.7; // TODO: calculate real progress
+  // === Ranking Cards ===
+  Widget _buildRankingCards(DashboardModel data) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Row(
+        children: [
+          // == Rank based on the whole center
+          Expanded(
+            child: _buildRankCard(
+              icon: '🏆',
+              label: 'المرتبة في المركز',
+              value: '${data.ranking.center}',
+              color: AppColors.gold,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Rank based on his circle
+          Expanded(
+            child: _buildRankCard(
+              icon: '⭐',
+              label: 'المرتبة في الحلقة',
+              value: '${data.ranking.circle}',
+              color: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
+  Widget _buildRankCard({
+    required String icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -295,39 +396,85 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          const Icon(Icons.menu_book_outlined, color: AppColors.primary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'الهدف الحالي: الجزء $nextJuz',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    backgroundColor: Colors.grey.shade100,
-                    valueColor: const AlwaysStoppedAnimation(AppColors.primary),
-                    minHeight: 8,
-                  ),
-                ),
-              ],
+          Text(icon, style: const TextStyle(fontSize: 28)),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: AppTextStyles.h2.copyWith(
+              color: color,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(height: 4),
           Text(
-            '${(progress * 100).toInt()}%',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.primary,
+            label,
+            style: AppTextStyles.caption,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Attendance Card ──────────────────────────────
+  Widget _buildAttendanceCard(DashboardModel data) {
+    final attendance = data.attendanceThisMonth;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'الحضور هذا الشهر',
+            style: AppTextStyles.bodyMedium.copyWith(
               fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Text(
+                '${attendance.present} / ${attendance.total} يوم',
+                style: AppTextStyles.h3.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '${(attendance.percentage * 100).toInt()}%',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: attendance.percentage,
+              backgroundColor: Colors.grey.shade100,
+              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+              minHeight: 8,
             ),
           ),
         ],
