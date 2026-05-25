@@ -1,3 +1,6 @@
+import 'package:darb_al_hoda_app/core/constants/app_colors.dart';
+import 'package:darb_al_hoda_app/core/constants/app_text_styles.dart';
+import 'package:darb_al_hoda_app/features/auth/presentation/screens/role_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
@@ -7,9 +10,7 @@ import 'features/auth/presentation/screens/login_screen.dart';
 void main() {
   runApp(
     // Wrap the whole app to let it use 'Riverpod'
-    const ProviderScope(
-      child: DarbAlHodaApp(),
-    ),
+    const ProviderScope(child: DarbAlHodaApp()),
   );
 }
 
@@ -25,35 +26,59 @@ class DarbAlHodaApp extends ConsumerStatefulWidget {
 }
 
 class _DarbAlHodaAppState extends ConsumerState<DarbAlHodaApp> {
-
   @override
   void initState() {
     super.initState();
 
     //check if we have session when we open the app
-    Future.microtask(() =>
-      ref.read(authProvider.notifier).checkSession()
-    );
+    Future.microtask(() => ref.read(authProvider.notifier).checkSession());
   }
 
   @override
   Widget build(BuildContext context) {
+    // keep watch the state if change to update the UI
+    final authState = ref.watch(authProvider);
+
     // the entry point of all our app widgets and UI components
     return MaterialApp(
-      title: 'درب الهدى',  //app name 
+      title: 'درب الهدى', //app name
       theme: AppTheme.theme, // use darb-al-hoda theme
       debugShowCheckedModeBanner: false, // hide the debug banner
-
       // RTL - from Right TO Left
       builder: (context, child) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: child!,
-        );
+        return Directionality(textDirection: TextDirection.rtl, child: child!);
       },
 
       // Navigate the App UI Pages
-      home: const LoginScreen(),
+      home: _buildHome(authState),
+    );
+  }
+
+  // === Navigation ===
+  Widget _buildHome(AuthState authState) {
+    // 1. if loading - show loading screen
+    if (authState.isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.primary,
+        body: Center(child: CircularProgressIndicator(color: AppColors.gold)),
+      );
+    }
+
+    // 2. if not authenticated - login screen
+    if (!authState.isAuthenticated) {
+      return const LoginScreen();
+    }
+
+    // 3. if have more than a role - role selection screen
+    if (authState.needsRoleSelection) {
+      return const RoleSelectionScreen();
+    }
+
+    // 4. if user has one role - Temp Screen
+    return Scaffold(
+      body: Center(
+        child: Text('مرحباً ${authState.user!.name}', style: AppTextStyles.h2),
+      ),
     );
   }
 }

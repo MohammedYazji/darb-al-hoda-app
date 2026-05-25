@@ -1,3 +1,4 @@
+import 'package:darb_al_hoda_app/features/auth/presentation/screens/role_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -45,17 +46,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     // 3. after login process read the state
     final authState = ref.read(authProvider);
-
-    // 4. if the login done - show welcome message
-    // mounted => to check if the window is still their - prevent issues
-    if (authState.isAuthenticated && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('مرحباً ${authState.user!.name}'),
-          backgroundColor: AppColors.primary,
-        ),
-      );
-    }
   }
 
   @override
@@ -79,7 +69,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 // withOpacity = rgba في CSS
-                color: AppColors.gold.withOpacity(0.08),
+                color: AppColors.gold.withValues(alpha: 0.08),
               ),
             ),
           ),
@@ -91,7 +81,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               height: 200,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.gold.withOpacity(0.08),
+                color: AppColors.gold.withValues(alpha: 0.08),
               ),
             ),
           ),
@@ -199,7 +189,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         Text(
           'مركز تحفيظ القرآن الكريم',
           style: AppTextStyles.bodyMedium.copyWith(
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
             letterSpacing: 0.5,
           ),
         ),
@@ -341,7 +331,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 elevation: 8,
-                shadowColor: AppColors.gold.withOpacity(0.3),
+                shadowColor: AppColors.gold.withValues(alpha: 0.3),
               ),
               child: authState.isLoading
                   ? const SizedBox(
