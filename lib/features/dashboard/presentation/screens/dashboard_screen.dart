@@ -92,135 +92,164 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final data = dashState.data!; // will not be null
     final user = authState.user!; // will not be null - I'm sure
 
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          // === Header ===
-          _buildHeader(user.name, data),
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        child: Column(
+          children: [
+            // === Header ===
+            _buildWelcomeHeader(user.name),
+            const SizedBox(height: 20),
 
-          // === AI coach assistant Message ===
-          // TODO fetch from AI endpoint
-          _buildAICoachCard(),
+            // === AI coach assistant Message ===
+            // TODO fetch from AI endpoint
+            _buildAICoachCard(),
+            const SizedBox(height: 20),
 
-          // === Total memorized ===
-          _buildMemorizationCard(data),
+            // === Total memorized ===
+            _buildMemorizationCard(data),
+            const SizedBox(height: 16),
 
-          // === The Ranking Cards ===
-          _buildRankingCards(data),
+            // === Current Target ===
+            _buildCurrentGoalCard(data),
+            const SizedBox(height: 16),
 
-          // === Attendance Card ===
-          _buildAttendanceCard(data),
+            // === The Ranking Cards ===
+            _buildRankingCards(data),
+            const SizedBox(height: 16),
 
-          const SizedBox(height: 24),
-        ],
+            // === Attendance Card ===
+            _buildAttendanceCard(data),
+          ],
+        ),
       ),
     );
   }
 
   // === Header ===
-  Widget _buildHeader(String name, DashboardModel data) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 56, 20, 20),
-      decoration: const BoxDecoration(color: AppColors.primary),
-      child: Row(
-        children: [
-          // === The user icon ===
-          // TODO: make seperate componenet for the icon to use it here and in role_selection_screen without repeat code
-          Container(
-            width: 44,
-            height: 44,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.gold,
+  Widget _buildWelcomeHeader(String name) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'أهلاً $name 👋',
+              style: AppTextStyles.h2.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w900,
+              ),
             ),
-            child: Center(
-              child: Text(
-                name.substring(0, 1),
-                style: AppTextStyles.h3.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w900,
-                ),
+            const SizedBox(height: 4),
+            Text(
+              _getTodayDate(),
+              style: AppTextStyles.bodySmall.copyWith(
+                color: Colors.grey.shade500,
+              ),
+            ),
+          ],
+        ),
+
+        // === AVATAR ===
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.primary,
+            border: Border.all(color: AppColors.gold, width: 2),
+          ),
+          child: Center(
+            child: Text(
+              name.substring(0, 1),
+              style: AppTextStyles.h3.copyWith(
+                color: AppColors.gold,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ),
-
-          const SizedBox(width: 12),
-
-          // === Welcoming ===
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'أهلاً $name 👋',
-                style: AppTextStyles.h3.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Text(
-                _getTodayDate(),
-                style: AppTextStyles.caption.copyWith(
-                  color: Colors.white.withValues(alpha: 0.7),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   // === AI Coach Card ===
   Widget _buildAICoachCard() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
       ),
-      child: Row(
+      child: Stack(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.gold.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(10),
+          // Decorative circle
+          // TODO: make it as separate componenet
+          Positioned(
+            left: -16,
+            top: -16,
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.gold.withValues(alpha: 0.15),
+              ),
             ),
-            child: const Text('🤖', style: TextStyle(fontSize: 24)),
           ),
 
-          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // == Title ==
+              Row(
+                children: [
+                  const Icon(
+                    Icons.psychology_outlined,
+                    color: AppColors.gold,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'رسالة المحفّز الذكي 🤖',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.gold,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
 
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+              // == Message ==
+              // TODO: hard coded for now
+              RichText(
+                text: TextSpan(
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    height: 1.6,
+                  ),
                   children: [
-                    const Text('🌟', style: TextStyle(fontSize: 12)),
-                    const SizedBox(width: 4),
-                    Text(
-                      'رسالة المحفّز الذكي',
-                      style: AppTextStyles.caption.copyWith(
+                    const TextSpan(text: '🌟 يا يوسف، '),
+                    TextSpan(
+                      text: 'كريم يتقدم عليك بـ١٥ صفحة فقط!',
+                      style: TextStyle(
                         color: AppColors.gold,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+                    const TextSpan(
+                      text:
+                          ' لو راجعت صفحة واحدة كل يوم لمدة أسبوعين، ستتجاوزه إن شاء الله. أنت قادر! 💚',
+                    ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                // TODO: hard coded for now
-                Text(
-                  'يا يوسف، كريم يتقدم عليك بـ5 صفحات فقط! واصل الحفظ إن شاء الله 💚',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: Colors.white,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -228,122 +257,196 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   // === Memorization Card ===
-  Widget _buildMemorizationCard(DashboardModel dashboard) {
-    final student = dashboard.student;
+  Widget _buildMemorizationCard(DashboardModel data) {
+    final student = data.student;
     final progress = student.progressPercentage;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey.shade100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
           ),
         ],
       ),
-      child: Column(
+      child: Stack(
         children: [
-          Text('إجمالي المحفوظ', style: AppTextStyles.h3),
-
-          const SizedBox(height: 20),
-
-          // === Circular Progress ===
-          SizedBox(
-            width: 160,
-            height: 160,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CircularProgressIndicator(
-                  value: progress,
-                  strokeWidth: 12,
-                  backgroundColor: Colors.grey.shade100,
-                  valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+          // Decorative corner
+          Positioned(
+            top: 0,
+            left: 0,
+            child: Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.05),
+                borderRadius: const BorderRadius.only(
+                  bottomRight: Radius.circular(96),
                 ),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+              ),
+            ),
+          ),
+
+          Column(
+            children: [
+              Text(
+                'إجمالي المحفوظ',
+                style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.w700),
+              ),
+
+              const SizedBox(height: 24),
+
+              // === Circular progress ===
+              SizedBox(
+                width: 190,
+                height: 190,
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Text(
-                      '${student.memorized}',
-                      style: AppTextStyles.h1.copyWith(
-                        color: AppColors.primary,
-                        fontSize: 40,
-                        fontWeight: FontWeight.w900,
-                      ),
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: progress),
+                      duration: const Duration(milliseconds: 1000),
+                      curve: Curves.easeOut,
+                      builder: (context, value, _) {
+                        return CustomPaint(
+                          size: const Size(220, 220),
+                          painter: CircularProgressPainter(
+                            progress: value,
+                            progressColor: AppColors.primary,
+                            backgroundColor: Colors.grey.shade100,
+                            strokeWidth: 14,
+                          ),
+                        );
+                      },
                     ),
-                    Text('من 30 جزء', style: AppTextStyles.caption),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${student.memorized}',
+                          style: AppTextStyles.h1.copyWith(
+                            color: AppColors.primary,
+                            fontSize: 48,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        Text(
+                          'من 30 جزء',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
-          ),
+              ),
 
-          const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-          // === Stats ===
-          // TODO: page and ayah not accurate cause not each juz equal 20 page
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStat('${student.confirmed}', 'مثبّت'),
-              _buildStat('${student.memorized}', 'أجزاء'),
-              _buildStat('${student.memorized * 20}', 'صفحة'),
-              _buildStat('${student.memorized * 200}', 'آية'),
+              // === Stats Row ===
+              // TODO: page and ayah not accurate cause not each juz equal 20 page
+              Container(
+                padding: const EdgeInsets.only(top: 16),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: Colors.grey.shade100)),
+                ),
+                child: Row(
+                  children: [
+                    _buildStat(
+                      '${student.memorized * 200}',
+                      'آية',
+                      AppColors.gold,
+                    ),
+                    _buildDivider(),
+                    _buildStat(
+                      '${student.memorized * 20}',
+                      'صفحة',
+                      AppColors.gold,
+                    ),
+                    _buildDivider(),
+                    _buildStat('${student.memorized}', 'أجزاء', AppColors.gold),
+                    _buildDivider(),
+                    _buildStat(
+                      '${student.confirmed}',
+                      'مثبّت',
+                      AppColors.primary,
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
 
-          // === Current Goal Card ===
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F0),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.menu_book_outlined,
-                  color: AppColors.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'الهدف الحالي: الجزء ${student.memorized + 1}',
-                    style: AppTextStyles.bodySmall.copyWith(
+  // === Current Goal ===
+  Widget _buildCurrentGoalCard(DashboardModel data) {
+    final nextJuz = data.student.memorized + 1;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade100),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.menu_book_outlined,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'الهدف الحالي: الجزء $nextJuz',
+                    style: AppTextStyles.bodyMedium.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                ],
+              ),
+              Text(
+                '70%',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.gold,
+                  fontWeight: FontWeight.w700,
                 ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 80,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: 0.7,
-                      backgroundColor: Colors.grey.shade200,
-                      valueColor: const AlwaysStoppedAnimation(
-                        AppColors.primary,
-                      ),
-                      minHeight: 6,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '70%',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 0.7),
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeOut,
+              builder: (context, value, _) {
+                return LinearProgressIndicator(
+                  value: value,
+                  backgroundColor: Colors.grey.shade100,
+                  valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                  minHeight: 10,
+                );
+              },
             ),
           ),
         ],
@@ -353,86 +456,90 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   // === Ranking Cards ===
   Widget _buildRankingCards(DashboardModel data) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Row(
-        children: [
-          // == Rank based on the whole center
-          Expanded(
-            child: _buildRankCard(
-              icon: '🏆',
-              label: 'المرتبة في المركز',
-              value: '${data.ranking.center}',
-              color: AppColors.gold,
-            ),
+    return Row(
+      children: [
+        Expanded(
+          child: _buildRankCard(
+            icon: Icons.emoji_events_outlined,
+            iconColor: AppColors.gold,
+            label: 'المرتبة في المركز',
+            value: '${data.ranking.center}',
+            gradientColor: AppColors.gold,
+            borderColor: AppColors.gold.withValues(alpha: 0.3),
           ),
-          const SizedBox(width: 12),
-          // Rank based on his circle
-          Expanded(
-            child: _buildRankCard(
-              icon: '⭐',
-              label: 'المرتبة في الحلقة',
-              value: '${data.ranking.circle}',
-              color: AppColors.primary,
-            ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildRankCard(
+            icon: Icons.star,
+            iconColor: AppColors.primary,
+            label: 'المرتبة في الحلقة',
+            value: '${data.ranking.circle}',
+            gradientColor: AppColors.primary,
+            borderColor: AppColors.primary.withValues(alpha: 0.15),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildRankCard({
-    required String icon,
+    required IconData icon,
+    required Color iconColor,
     required String label,
     required String value,
-    required Color color,
+    required Color gradientColor,
+    required Color borderColor,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
-        ],
+        gradient: LinearGradient(
+          colors: [gradientColor.withValues(alpha: 0.12), Colors.white],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         children: [
-          Text(icon, style: const TextStyle(fontSize: 28)),
-          const SizedBox(height: 8),
+          Icon(Icons.star, color: AppColors.primary, size: 32),
+          const SizedBox(height: 6),
           Text(
-            value,
-            style: AppTextStyles.h2.copyWith(
-              color: color,
-              fontWeight: FontWeight.w900,
+            label,
+            style: AppTextStyles.caption.copyWith(
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w700,
             ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
           Text(
-            label,
-            style: AppTextStyles.caption,
-            textAlign: TextAlign.center,
+            value,
+            style: AppTextStyles.h2.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ],
       ),
     );
   }
 
-  // ─── Attendance Card ──────────────────────────────
+  // === Attendance Card ===
   Widget _buildAttendanceCard(DashboardModel data) {
     final attendance = data.attendanceThisMonth;
+    final percentage = attendance.percentage;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade100),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8),
         ],
       ),
       child: Column(
@@ -440,27 +547,51 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         children: [
           Text(
             'الحضور هذا الشهر',
-            style: AppTextStyles.bodyMedium.copyWith(
+            style: AppTextStyles.bodySmall.copyWith(
               fontWeight: FontWeight.w700,
+              color: Colors.grey.shade700,
             ),
           ),
-          const SizedBox(height: 12),
+
+          const SizedBox(height: 10),
 
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '${attendance.present} / ${attendance.total} يوم',
-                style: AppTextStyles.h3.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w900,
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '${attendance.present} ',
+                      style: AppTextStyles.h3.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    TextSpan(
+                      text: '/ ${attendance.total} يوم',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: Colors.grey.shade400,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const Spacer(),
-              Text(
-                '${(attendance.percentage * 100).toInt()}%',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w700,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${(percentage * 100).toInt()}%',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey.shade600,
+                  ),
                 ),
               ),
             ],
@@ -470,11 +601,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: attendance.percentage,
-              backgroundColor: Colors.grey.shade100,
-              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
-              minHeight: 8,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: percentage),
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeOut,
+              builder: (context, value, _) {
+                return LinearProgressIndicator(
+                  value: value,
+                  backgroundColor: Colors.grey.shade100,
+                  valueColor: const AlwaysStoppedAnimation(Colors.grey),
+                  minHeight: 8,
+                );
+              },
             ),
           ),
         ],
@@ -482,19 +620,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  // === Statistics widget for each topic
-  Widget _buildStat(String value, String label) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: AppTextStyles.h3.copyWith(
-            color: AppColors.primary,
-            fontWeight: FontWeight.w900,
+  // === Statistics widget for each topic ===
+  Widget _buildStat(String value, String label, Color color) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: AppTextStyles.bodyLarge.copyWith(
+              color: color,
+              fontWeight: FontWeight.w900,
+            ),
           ),
-        ),
-        Text(label, style: AppTextStyles.caption),
-      ],
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(
+              color: Colors.grey.shade500,
+              fontWeight: FontWeight.w700,
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -526,4 +673,57 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     ];
     return '${days[now.weekday - 1]} ${now.day} ${months[now.month - 1]}';
   }
+
+  Widget _buildDivider() {
+    return Container(width: 1, height: 32, color: Colors.grey.shade100);
+  }
+}
+
+// === Circular Progress Painter ===
+// TODO move into separate file
+class CircularProgressPainter extends CustomPainter {
+  final double progress;
+  final Color progressColor;
+  final Color backgroundColor;
+  final double strokeWidth;
+
+  CircularProgressPainter({
+    required this.progress,
+    required this.progressColor,
+    required this.backgroundColor,
+    this.strokeWidth = 10,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - strokeWidth) / 2;
+
+    //== Circle Background ===
+    final bgPaint = Paint()
+      ..color = backgroundColor
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(center, radius, bgPaint);
+
+    // === Progress-Bar ===
+    final progressPaint = Paint()
+      ..color = progressColor
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -3.14159 / 2, // Start from top
+      2 * 3.14159 * progress, // angel of progress
+      false,
+      progressPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(CircularProgressPainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }
