@@ -1,5 +1,6 @@
 import 'package:darb_al_hoda_app/core/constants/app_colors.dart';
 import 'package:darb_al_hoda_app/features/auth/presentation/screens/role_selection_screen.dart';
+import 'package:darb_al_hoda_app/features/circle/presentation/screens/circle_screen.dart';
 import 'package:darb_al_hoda_app/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -74,7 +75,16 @@ class _DarbAlHodaAppState extends ConsumerState<DarbAlHodaApp> {
       return const RoleSelectionScreen();
     }
 
-    // 4. else render the dashboard
-    return const DashboardScreen();
+    // 4. else redirect based on active role
+    switch (authState.activeRole) {
+      case 'student':
+        return const DashboardScreen();
+      case 'circle_sheikh':
+        return const CircleScreen();
+      case 'admin':
+        return const DashboardScreen(); // TODO: AdminScreen
+      default:
+        return const DashboardScreen();
+    }
   }
 }
