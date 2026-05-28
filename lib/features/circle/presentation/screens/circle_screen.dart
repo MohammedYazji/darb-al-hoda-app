@@ -144,7 +144,7 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
       // current juz will be (30 - count of memorized Juz's)
       // if the student memorized 3 Juz's so (30 - 3) = so the next will be the 27 Juz
       _selectedJuz = type == NominationType.recitation
-          ? (30 - student.memorized)
+          ? (student.memorized < 30 ? 30 - student.memorized : 1)
           : null;
       _selectedGroup = null;
     });
@@ -843,8 +843,10 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
                       borderRadius: BorderRadius.circular(16),
                       child: ListView.separated(
                         shrinkWrap: true,
-                        // Number of memorized juz's
-                        itemCount: _sheetStudent?.memorized ?? 0,
+                        // Number of memorized juz's + the current one they are working on
+                        itemCount: ((_sheetStudent?.memorized ?? 0) < 30)
+                            ? (_sheetStudent?.memorized ?? 0) + 1
+                            : 30,
                         separatorBuilder: (_, __) =>
                             Divider(color: Colors.grey.shade50, height: 1),
                         itemBuilder: (context, index) {
