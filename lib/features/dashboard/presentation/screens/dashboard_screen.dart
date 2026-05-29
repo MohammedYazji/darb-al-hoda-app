@@ -1,6 +1,7 @@
 import 'package:darb_al_hoda_app/core/constants/app_colors.dart';
 import 'package:darb_al_hoda_app/core/constants/app_text_styles.dart';
 import 'package:darb_al_hoda_app/core/models/dashboard_model.dart';
+import 'package:darb_al_hoda_app/core/utils/arabic_utils.dart';
 import 'package:darb_al_hoda_app/features/auth/presentation/auth_provider.dart';
 import 'package:darb_al_hoda_app/features/dashboard/presentation/dashboard_provider.dart';
 import 'package:darb_al_hoda_app/shared/widgets/bottom_nav_bar.dart';
@@ -328,7 +329,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          toArabicNumbers('${student.memorized}'),
+                          ArabicUtils.fromInt(student.memorized),
                           style: AppTextStyles.h1.copyWith(
                             color: AppColors.primary,
                             fontSize: 48,
@@ -336,7 +337,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           ),
                         ),
                         Text(
-                          toArabicNumbers('من 30 جزء'),
+                          ArabicUtils.toArabic('من 30 جزء'),
                           style: AppTextStyles.bodySmall.copyWith(
                             color: Colors.grey.shade500,
                             fontWeight: FontWeight.w700,
@@ -360,25 +361,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 child: Row(
                   children: [
                     _buildStat(
-                      toArabicNumbers('${student.memorized * 200}'),
+                      ArabicUtils.fromInt(student.memorized * 200),
                       'آية',
                       AppColors.gold,
                     ),
                     _buildDivider(),
                     _buildStat(
-                      toArabicNumbers('${student.memorized * 20}'),
+                      ArabicUtils.fromInt(student.memorized * 20),
                       'صفحة',
                       AppColors.gold,
                     ),
                     _buildDivider(),
                     _buildStat(
-                      toArabicNumbers('${student.memorized}'),
+                      ArabicUtils.fromInt(student.memorized),
                       'أجزاء',
                       AppColors.gold,
                     ),
                     _buildDivider(),
                     _buildStat(
-                      toArabicNumbers('${student.confirmed}'),
+                      ArabicUtils.fromInt(student.confirmed),
                       'مثبّت',
                       AppColors.primary,
                     ),
@@ -420,7 +421,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    toArabicNumbers('الهدف الحالي: الجزء $nextJuz'),
+                    ArabicUtils.toArabic('الهدف الحالي: الجزء $nextJuz'),
                     style: AppTextStyles.bodyMedium.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -428,7 +429,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ],
               ),
               Text(
-                toArabicNumbers('70%'),
+                ArabicUtils.toArabic('70%'),
                 style: AppTextStyles.bodySmall.copyWith(
                   color: AppColors.gold,
                   fontWeight: FontWeight.w700,
@@ -467,7 +468,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             icon: Icons.emoji_events_outlined,
             iconColor: AppColors.gold,
             label: 'المرتبة في المركز',
-            value: toArabicNumbers('${data.ranking.center}'),
+            value: ArabicUtils.fromInt(data.ranking.center),
             gradientColor: AppColors.gold,
             borderColor: AppColors.gold.withValues(alpha: 0.3),
           ),
@@ -478,7 +479,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             icon: Icons.star,
             iconColor: AppColors.primary,
             label: 'المرتبة في الحلقة',
-            value: toArabicNumbers('${data.ranking.circle}'),
+            value: ArabicUtils.fromInt(data.ranking.circle),
             gradientColor: AppColors.primary,
             borderColor: AppColors.primary.withValues(alpha: 0.15),
           ),
@@ -566,14 +567,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 text: TextSpan(
                   children: [
                     TextSpan(
-                      text: toArabicNumbers('${attendance.present} '),
+                      text: ArabicUtils.fromInt(attendance.present),
                       style: AppTextStyles.h3.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     TextSpan(
-                      text: toArabicNumbers('/ ${attendance.total} يوم'),
+                      text: ArabicUtils.toArabic('/ ${attendance.total} يوم'),
                       style: AppTextStyles.bodySmall.copyWith(
                         color: Colors.grey.shade400,
                       ),
@@ -591,7 +592,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  toArabicNumbers('${(percentage * 100).toInt()}%'),
+                  ArabicUtils.toArabic('${(percentage * 100).toInt()}%'),
                   style: AppTextStyles.bodySmall.copyWith(
                     fontWeight: FontWeight.w700,
                     color: Colors.grey.shade600,
@@ -675,26 +676,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       'نوفمبر',
       'ديسمبر',
     ];
-    return toArabicNumbers(
+    return ArabicUtils.toArabic(
       '${days[now.weekday - 1]} ${now.day} ${months[now.month - 1]}',
     );
   }
 
   Widget _buildDivider() {
     return Container(width: 1, height: 32, color: Colors.grey.shade100);
-  }
-
-  // === Arabic Numbers Convertor ===
-  // TODO make it golobal
-  String toArabicNumbers(String input) {
-    const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    const arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-
-    String result = input;
-    for (int i = 0; i < english.length; i++) {
-      result = result.replaceAll(english[i], arabic[i]);
-    }
-    return result;
   }
 }
 

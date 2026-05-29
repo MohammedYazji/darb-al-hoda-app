@@ -1,3 +1,4 @@
+import 'package:darb_al_hoda_app/core/utils/arabic_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -62,12 +63,12 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
       // تراكمي من جزء 30
       final sizes = [3, 5, 8, 10, 13, 15, 18, 20, 23, 25, 28, 30];
       for (final size in sizes) {
-        final from = 30;
-        final to = 30 - size + 1;
+        final from = ArabicUtils.fromInt(30);
+        final to = ArabicUtils.fromInt(30 - size + 1);
         groups.add({
-          'label': 'الأجزاء $to – $from',
-          'sub': '$size أجزاء تراكمية',
-          'juznumbers': List.generate(size, (i) => 30 - i),
+          'label': ArabicUtils.toArabic('الأجزاء $to – $from'),
+          'sub': ArabicUtils.toArabic('$size أجزاء تراكمية'),
+          'juznumbers': List.generate(size, (i) => ArabicUtils.fromInt(30 - i)),
         });
       }
     } else {
@@ -77,7 +78,7 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
 
       while (blockStart > 0) {
         final blockEnd = blockStart - 4; // 5 juz in each block
-        final memorizedFrom = 30 - memorized + 1;
+        final memorizedFrom = ArabicUtils.fromInt(30 - memorized + 1);
 
         // 3-juz test: First 3 Juz's from the block
         final threeEnd = blockStart - 2;
@@ -86,8 +87,8 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
         // The student must memorized them before collective exam
         if (memorized >= threeNeeded) {
           groups.add({
-            'label': 'الأجزاء $threeEnd – $blockStart',
-            'sub': '٣ أجزاء',
+            'label': ArabicUtils.toArabic('الأجزاء $threeEnd – $blockStart'),
+            'sub': ArabicUtils.toArabic('3 أجزاء'),
             'juznumbers': [blockStart, blockStart - 1, blockStart - 2],
           });
         }
@@ -96,7 +97,7 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
         final fiveNeeded = 30 - blockEnd + 1;
         if (blockEnd >= 1 && memorized >= fiveNeeded) {
           groups.add({
-            'label': 'الأجزاء $blockEnd – $blockStart',
+            'label': ArabicUtils.toArabic('الأجزاء $blockEnd – $blockStart'),
             'sub': '٥ أجزاء',
             'juznumbers': List.generate(5, (i) => blockStart - i),
           });
@@ -162,8 +163,10 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
     if (_sheetStudent == null || _sheetType == null) return;
 
     final juzLabel = _sheetType == NominationType.recitation
-        ? 'الجزء $_selectedJuz'
-        : _getCollectiveGroups(_sheetStudent!)[_selectedGroup!]['label']!;
+        ? ArabicUtils.toArabic('الجزء $_selectedJuz')
+        : ArabicUtils.toArabic(
+            _getCollectiveGroups(_sheetStudent!)[_selectedGroup!]['label']!,
+          );
 
     final typeLabel = _sheetType == NominationType.recitation
         ? 'للسرد والاختبار'
@@ -361,7 +364,7 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '${circle.students.length} طالباً',
+                      ArabicUtils.toArabic('${circle.students.length} طالباً'),
                       style: AppTextStyles.caption.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -399,7 +402,9 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'الترشيحات الحالية (${_nominations.length})',
+                ArabicUtils.toArabic(
+                  'الترشيحات الحالية (${_nominations.length})',
+                ),
                 style: AppTextStyles.bodySmall.copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w700,
@@ -440,7 +445,7 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              '${n.studentName} — ${n.juz}',
+              ArabicUtils.toArabic('${n.studentName} — ${n.juz}'),
               style: AppTextStyles.bodySmall.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -582,7 +587,7 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
                                 ),
                                 const SizedBox(width: 2),
                                 Text(
-                                  '#$rank',
+                                  ArabicUtils.toArabic('#$rank'),
                                   style: AppTextStyles.caption.copyWith(
                                     color: AppColors.gold,
                                     fontWeight: FontWeight.w900,
@@ -604,7 +609,7 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          '${student.memorized} جزء',
+                          ArabicUtils.toArabic('${student.memorized} جزء'),
                           style: AppTextStyles.caption.copyWith(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w700,
@@ -612,7 +617,9 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          '· الجزء ${student.memorized + 1}',
+                          ArabicUtils.toArabic(
+                            '· الجزء ${student.memorized + 1}',
+                          ),
                           style: AppTextStyles.caption.copyWith(
                             color: Colors.grey.shade400,
                           ),
@@ -658,7 +665,7 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
           // Nomination buttons
           Row(
             children: [
-              // رشّح للسرد
+              // recitation nomination
               Expanded(
                 child: GestureDetector(
                   onTap: () => _openSheet(student, NominationType.recitation),
@@ -696,7 +703,7 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
 
               const SizedBox(width: 8),
 
-              // رشّح للتثبيت
+              // confirmed nomination
               Expanded(
                 child: GestureDetector(
                   onTap: () => _openSheet(student, NominationType.collective),
@@ -882,7 +889,7 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    'الجزء $juzNum',
+                                    ArabicUtils.toArabic('الجزء $juzNum'),
                                     style: AppTextStyles.bodySmall.copyWith(
                                       color: isSelected
                                           ? const Color(0xFF1565C0)
