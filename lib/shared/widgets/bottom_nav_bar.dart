@@ -1,11 +1,13 @@
 // Tabs will not be the same for each user
 import 'package:darb_al_hoda_app/core/constants/app_colors.dart';
 import 'package:darb_al_hoda_app/core/constants/app_text_styles.dart';
+import 'package:darb_al_hoda_app/features/auth/presentation/auth_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum NavTab { home, students, circles, attendance, admin }
+enum NavTab { home, students, circles, attendance, admin, recitation }
 
-class BottomNavBar extends StatelessWidget {
+class BottomNavBar extends ConsumerWidget {
   final NavTab currentTab;
   final Function(NavTab) onTabSelected; // as a callback fun
 
@@ -16,7 +18,9 @@ class BottomNavBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeRole = ref.watch(authProvider).activeRole;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -34,21 +38,32 @@ class BottomNavBar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildTab(NavTab.home, Icons.help_outline_outlined, 'الرئيسية'),
-              _buildTab(NavTab.students, Icons.people, 'الطلاب'),
-              _buildTab(NavTab.circles, Icons.menu_book_outlined, 'الحلقات'),
-              _buildTab(
-                NavTab.attendance,
-                Icons.calendar_today_outlined,
-                'الحضور',
-              ),
-              _buildTab(NavTab.admin, Icons.settings_outlined, 'المدير'),
-            ],
+            children: _buildTabsForRole(activeRole),
           ),
         ),
       ),
     );
+  }
+
+  List<Widget> _buildTabsForRole(String? role) {
+    final tabs = <Widget>[
+      _buildTab(NavTab.home, Icons.dashboard_outlined, 'الرئيسية'),
+    ];
+
+    if (role == 'circle_sheikh' || role == 'recitation_sheikh') {
+      tabs.add(_buildTab(NavTab.circles, Icons.groups_outlined, 'الحلقة'));
+      tabs.add(
+        _buildTab(NavTab.recitation, Icons.menu_book_outlined, 'التسميع'),
+      );
+      tabs.add(_buildTab(NavTab.students, Icons.people_outline, 'الطلاب'));
+      tabs.add(
+        _buildTab(NavTab.attendance, Icons.calendar_today_outlined, 'الحضور'),
+      );
+    } else if (role == 'admin') {
+      tabs.add(_buildTab(NavTab.admin, Icons.settings_outlined, 'المدير'));
+    }
+
+    return tabs;
   }
 
   Widget _buildTab(NavTab tab, IconData icon, String label) {
