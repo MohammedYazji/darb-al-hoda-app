@@ -78,7 +78,6 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
 
       while (blockStart > 0) {
         final blockEnd = blockStart - 4; // 5 juz in each block
-        final memorizedFrom = ArabicUtils.fromInt(30 - memorized + 1);
 
         // 3-juz test: First 3 Juz's from the block
         final threeEnd = blockStart - 2;
