@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:darb_al_hoda_app/core/local/connectivity_service.dart';
 import 'package:darb_al_hoda_app/features/quran/presentation/quran_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,6 +41,9 @@ class _RecitationScreenState extends ConsumerState<RecitationScreen> {
   // to show toast message after save the recitation data
   String? _toast;
 
+  // Connectivity subscription for auto-sync
+  StreamSubscription<bool>? _connectivitySub;
+
   // controllers for ayah inputs with arabic numeral support
   TextEditingController? _newFromAyahCtrl;
   TextEditingController? _newToAyahCtrl;
@@ -47,6 +52,7 @@ class _RecitationScreenState extends ConsumerState<RecitationScreen> {
 
   @override
   void dispose() {
+    _connectivitySub?.cancel();
     _disposeAyahControllers();
     super.dispose();
   }
@@ -101,6 +107,13 @@ class _RecitationScreenState extends ConsumerState<RecitationScreen> {
       ref.read(quranProvider.notifier).fetchSurahs();
       if (ref.read(circleProvider).hasData) {
         _loadDayLogs();
+      }
+    });
+
+    // Auto-sync pending records when connectivity returns
+    _connectivitySub = ConnectivityService.onlineStream.listen((isOnline) {
+      if (isOnline) {
+        ref.read(recitationProvider.notifier).syncPendingLogs();
       }
     });
   }
@@ -421,6 +434,11 @@ class _RecitationScreenState extends ConsumerState<RecitationScreen> {
     return Column(
       children: [
         _buildStickyHeader(circle),
+
+        // ── Pending-sync banner ──
+        if (recitationState.pendingSyncCount > 0)
+          _buildPendingSyncBanner(recitationState.pendingSyncCount),
+
         Expanded(
           child: recitationState.isLoading && _studentRecords.isEmpty
               ? const Center(
@@ -593,6 +611,58 @@ class _RecitationScreenState extends ConsumerState<RecitationScreen> {
       style: AppTextStyles.caption.copyWith(
         color: color,
         fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+
+  /// Amber banner shown when there are locally saved but unsynced days.
+  Widget _buildPendingSyncBanner(int count) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFDE68A), width: 1.5),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.cloud_upload_outlined,
+            color: Color(0xFFF59E0B),
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              ArabicUtils.toArabic(
+                'يوجد ${count == 1 ? 'يوم' : '$count أيام'} غير مزامنة · سيُرسل تلقائياً عند الاتصال',
+              ),
+              style: AppTextStyles.caption.copyWith(
+                color: const Color(0xFF92400E),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () =>
+                ref.read(recitationProvider.notifier).syncPendingLogs(),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF59E0B),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'مزامنة',
+                style: AppTextStyles.caption.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,3 +1,5 @@
+import 'package:darb_al_hoda_app/core/local/connectivity_service.dart';
+import 'package:darb_al_hoda_app/core/local/recitation_local_db.dart';
 import 'package:darb_al_hoda_app/core/models/circle_model.dart';
 import 'package:darb_al_hoda_app/core/models/next_ayah_model.dart';
 import 'package:darb_al_hoda_app/core/models/recitation_log_model.dart';
@@ -12,17 +14,27 @@ class RecitationState {
   final bool isSaving;
   final String? error;
 
+  /// Number of days that have locally saved but not yet synced logs.
+  final int pendingSyncCount;
+
   const RecitationState({
     this.isLoading = false,
     this.isSaving = false,
     this.error,
+    this.pendingSyncCount = 0,
   });
 
-  RecitationState copyWith({bool? isLoading, bool? isSaving, String? error}) {
+  RecitationState copyWith({
+    bool? isLoading,
+    bool? isSaving,
+    String? error,
+    int? pendingSyncCount,
+  }) {
     return RecitationState(
       isLoading: isLoading ?? this.isLoading,
       isSaving: isSaving ?? this.isSaving,
       error: error,
+      pendingSyncCount: pendingSyncCount ?? this.pendingSyncCount,
     );
   }
 }
@@ -31,10 +43,12 @@ class RecitationNotifier extends StateNotifier<RecitationState> {
   final Dio _dio;
 
   RecitationNotifier()
-    : _dio = DioClient.instance,
-      super(const RecitationState());
+      : _dio = DioClient.instance,
+        super(const RecitationState()) {
+    _refreshPendingCount();
+  }
 
-  // === Date helpers ===
+  // ── Date helpers ──────────────────────────────────────────────────────
 
   /// Saturday of the current week + [dayIndex] (0=Sat … 4=Wed).
   static DateTime dateTimeForDayIndex(int dayIndex) {
@@ -48,11 +62,9 @@ class RecitationNotifier extends StateNotifier<RecitationState> {
   static int todayDayIndex() {
     final now = DateTime.now();
     final saturday = _saturdayOfWeek(now);
-    final diff = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    ).difference(DateTime(saturday.year, saturday.month, saturday.day)).inDays;
+    final diff = DateTime(now.year, now.month, now.day)
+        .difference(DateTime(saturday.year, saturday.month, saturday.day))
+        .inDays;
     if (diff >= 0 && diff <= 4) return diff;
     return 0;
   }
@@ -71,7 +83,7 @@ class RecitationNotifier extends StateNotifier<RecitationState> {
     return '${date.year}-$m-$d';
   }
 
-  // === Next-ayah suggestion ===
+  // ── Next-ayah suggestion ──────────────────────────────────────────────
 
   Future<NextAyahModel?> fetchNextAyah(int studentId) async {
     try {
@@ -125,8 +137,13 @@ class RecitationNotifier extends StateNotifier<RecitationState> {
     return updated;
   }
 
-  // === Fetch ===
+  // ── Fetch (offline-first read) ────────────────────────────────────────
 
+  /// Load logs for [circleId] + [date].
+  ///
+  /// Strategy:
+  ///   1. Try API → on success, cache in local DB and return.
+  ///   2. On failure (offline / error) → fall back to local DB.
   Future<List<RecitationLogModel>> fetchLogs({
     required int circleId,
     required String date,
@@ -134,6 +151,7 @@ class RecitationNotifier extends StateNotifier<RecitationState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
+      // 1. Try API
       final response = await _dio.get(
         '/recitation-logs',
         queryParameters: {'circle_id': circleId, 'date': date},
@@ -146,14 +164,32 @@ class RecitationNotifier extends StateNotifier<RecitationState> {
       state = state.copyWith(isLoading: false);
       return logs;
     } on DioException {
-      final message = 'لا يوجد اتصال · تعذر تحميل سجل التسميع';
-      state = state.copyWith(isLoading: false, error: message);
-      rethrow;
+      // 2. Offline fallback: read from local DB
+      try {
+        final rows = await RecitationLocalDb.getLogsForDay(
+          circleId: circleId,
+          date: date,
+        );
+        final logs = rows.map(_logFromLocalRow).toList();
+        state = state.copyWith(isLoading: false);
+        return logs;
+      } catch (_) {
+        final message = 'لا يوجد اتصال · تعذر تحميل سجل التسميع';
+        state = state.copyWith(isLoading: false, error: message);
+        rethrow;
+      }
     }
   }
 
-  // === Save ===─
+  // ── Save (local-first write) ──────────────────────────────────────────
 
+  /// Save logs for [circleId] + [date].
+  ///
+  /// Strategy:
+  ///   1. Validate all records (Flutter-side, no network needed).
+  ///   2. Always upsert into local SQLite (synced = 0).
+  ///   3. If online → POST to API → mark rows synced = 1.
+  ///   4. If offline → return Arabic message telling the sheikh it will sync later.
   Future<String> saveLogs({
     required int circleId,
     required String date,
@@ -163,14 +199,13 @@ class RecitationNotifier extends StateNotifier<RecitationState> {
     state = state.copyWith(isSaving: true, error: null);
 
     try {
-      final toSave = records
-          .where(
-            (r) =>
-                r.absence != AbsenceType.none ||
-                r.hasRecitation ||
-                r.presentNotRecited,
-          )
-          .toList();
+      // 1. Validate
+      final toSave = records.where(
+        (r) =>
+            r.absence != AbsenceType.none ||
+            r.hasRecitation ||
+            r.presentNotRecited,
+      ).toList();
 
       for (final record in toSave) {
         if (record.hasRecitation && record.session != null) {
@@ -192,26 +227,92 @@ class RecitationNotifier extends StateNotifier<RecitationState> {
         throw Exception('لا يوجد بيانات للحفظ');
       }
 
-      final logsPayload = toSave.map(_logEntryFromRecord).toList();
-      await _dio.post(
-        '/recitation-logs',
-        data: {'circle_id': circleId, 'date': date, 'logs': logsPayload},
+      // 2. Always save locally first (synced = 0)
+      await RecitationLocalDb.upsertLogs(
+        circleId: circleId,
+        date: date,
+        records: toSave,
       );
 
+      // 3. Try API
+      final online = await ConnectivityService.isOnline();
+      if (online) {
+        try {
+          final logsPayload = toSave.map(_logEntryFromRecord).toList();
+          await _dio.post(
+            '/recitation-logs',
+            data: {
+              'circle_id': circleId,
+              'date': date,
+              'logs': logsPayload,
+            },
+          );
+          // Mark as synced on success
+          await RecitationLocalDb.markSynced(circleId: circleId, date: date);
+          await _refreshPendingCount();
+          state = state.copyWith(isSaving: false);
+          return 'تم تسجيل التسميع بنجاح';
+        } on DioException catch (e) {
+          // API reachable but returned an error (validation etc.)
+          final msg = e.response?.data?['message'] as String?;
+          if (msg != null) {
+            state = state.copyWith(isSaving: false);
+            throw Exception(msg);
+          }
+          // Network error despite "online" check — treat as offline
+        }
+      }
+
+      // 4. Offline path
+      await _refreshPendingCount();
       state = state.copyWith(isSaving: false);
-      return 'تم تسجيل التسميع بنجاح';
-    } on DioException catch (e) {
-      state = state.copyWith(isSaving: false);
-      final msg = e.response?.data?['message'] as String?;
-      if (msg != null) throw Exception(msg);
-      rethrow;
+      return 'تم الحفظ محلياً · سيُرسل تلقائياً عند الاتصال';
     } catch (_) {
       state = state.copyWith(isSaving: false);
       rethrow;
     }
   }
 
-  // === Merge & helpers ===─
+  // ── Sync pending ──────────────────────────────────────────────────────
+
+  /// Push all unsynced local records to the API.
+  /// Called automatically when connectivity returns.
+  Future<void> syncPendingLogs() async {
+    final groups = await RecitationLocalDb.getPendingGroups();
+    if (groups.isEmpty) return;
+
+    for (final group in groups) {
+      final circleId = group['circle_id'] as int;
+      final date = group['date'] as String;
+      final rows = group['rows'] as List<Map<String, dynamic>>;
+
+      try {
+        final logsPayload = rows
+            .map(RecitationLocalDb.rowToApiEntry)
+            .toList();
+
+        await _dio.post(
+          '/recitation-logs',
+          data: {
+            'circle_id': circleId,
+            'date': date,
+            'logs': logsPayload,
+          },
+        );
+
+        await RecitationLocalDb.markSynced(
+          circleId: circleId,
+          date: date,
+        );
+      } on DioException {
+        continue;
+      }
+    }
+
+    await _refreshPendingCount();
+  }
+
+  // ── Merge & helpers ───────────────────────────────────────────────────
 
   static List<StudentRecord> mergeStudentsWithLogs(
     List<CircleStudentModel> students,
@@ -232,8 +333,8 @@ class RecitationNotifier extends StateNotifier<RecitationState> {
   ) {
     final absence = switch (log.attendanceStatus) {
       'absent_unexcused' => AbsenceType.absent,
-      'absent_excused' => AbsenceType.excused,
-      _ => AbsenceType.none,
+      'absent_excused'   => AbsenceType.excused,
+      _                  => AbsenceType.none,
     };
 
     SessionRecord? session;
@@ -242,22 +343,22 @@ class RecitationNotifier extends StateNotifier<RecitationState> {
       final rev = log.revision;
       final candidate = SessionRecord(
         newFromSurah: nm?.fromSurah,
-        newFromAyah: nm?.fromAyah,
-        newToSurah: nm?.toSurah,
-        newToAyah: nm?.toAyah,
+        newFromAyah:  nm?.fromAyah,
+        newToSurah:   nm?.toSurah,
+        newToAyah:    nm?.toAyah,
         revFromSurah: rev?.fromSurah,
-        revFromAyah: rev?.fromAyah,
-        revToSurah: rev?.toSurah,
-        revToAyah: rev?.toAyah,
+        revFromAyah:  rev?.fromAyah,
+        revToSurah:   rev?.toSurah,
+        revToAyah:    rev?.toAyah,
         grade: log.grade ?? '',
       );
       if (candidate.hasData) session = candidate;
     }
 
     return StudentRecord(
-      student: student,
-      session: session,
-      absence: absence,
+      student:     student,
+      session:     session,
+      absence:     absence,
       isSuggestion: false,
     );
   }
@@ -265,20 +366,19 @@ class RecitationNotifier extends StateNotifier<RecitationState> {
   static Map<String, dynamic> _logEntryFromRecord(StudentRecord record) {
     if (record.presentNotRecited) {
       return {
-        'student_id': record.student.id,
+        'student_id':        record.student.id,
         'attendance_status': 'present_not_recited',
       };
     }
 
     final status = switch (record.absence) {
-      AbsenceType.absent => 'absent_unexcused',
+      AbsenceType.absent  => 'absent_unexcused',
       AbsenceType.excused => 'absent_excused',
-      AbsenceType.none =>
-        record.hasRecitation ? 'present' : 'present_not_recited',
+      AbsenceType.none    => record.hasRecitation ? 'present' : 'present_not_recited',
     };
 
     final entry = <String, dynamic>{
-      'student_id': record.student.id,
+      'student_id':        record.student.id,
       'attendance_status': status,
     };
 
@@ -286,34 +386,58 @@ class RecitationNotifier extends StateNotifier<RecitationState> {
       final s = record.session!;
       void addRange(String prefix, int? fromS, int? fromA, int? toS, int? toA) {
         if (fromS != null) entry['${prefix}_from_surah'] = fromS;
-        if (fromA != null) entry['${prefix}_from_ayah'] = fromA;
-        if (toS != null) entry['${prefix}_to_surah'] = toS;
-        if (toA != null) entry['${prefix}_to_ayah'] = toA;
+        if (fromA != null) entry['${prefix}_from_ayah']  = fromA;
+        if (toS   != null) entry['${prefix}_to_surah']   = toS;
+        if (toA   != null) entry['${prefix}_to_ayah']    = toA;
       }
 
-      addRange(
-        'new_memo',
-        s.newFromSurah,
-        s.newFromAyah,
-        s.newToSurah,
-        s.newToAyah,
-      );
-      addRange(
-        'revision',
-        s.revFromSurah,
-        s.revFromAyah,
-        s.revToSurah,
-        s.revToAyah,
-      );
+      addRange('new_memo',  s.newFromSurah, s.newFromAyah, s.newToSurah, s.newToAyah);
+      addRange('revision',  s.revFromSurah, s.revFromAyah, s.revToSurah, s.revToAyah);
 
       if (s.grade.isNotEmpty) entry['grade'] = s.grade;
     }
 
     return entry;
   }
+
+  /// Build a [RecitationLogModel] from a local DB row.
+  static RecitationLogModel _logFromLocalRow(Map<String, dynamic> row) {
+    return RecitationLogModel.fromJson({
+      'id':                row['id'],
+      'date':              row['date'],
+      'attendance_status': row['attendance_status'],
+      'student': {
+        'id':   row['student_id'],
+        'name': '',       // name not stored locally — filled in via circle students
+      },
+      'new_memorization': row['new_memo_from_surah'] != null
+          ? {
+              'from_surah': row['new_memo_from_surah'],
+              'from_ayah':  row['new_memo_from_ayah'],
+              'to_surah':   row['new_memo_to_surah'],
+              'to_ayah':    row['new_memo_to_ayah'],
+            }
+          : null,
+      'revision': row['revision_from_surah'] != null
+          ? {
+              'from_surah': row['revision_from_surah'],
+              'from_ayah':  row['revision_from_ayah'],
+              'to_surah':   row['revision_to_surah'],
+              'to_ayah':    row['revision_to_ayah'],
+            }
+          : null,
+      'grade':        row['grade'],
+      'recorded_by':  null,
+    });
+  }
+
+  Future<void> _refreshPendingCount() async {
+    final count = await RecitationLocalDb.pendingSyncDayCount();
+    if (mounted) state = state.copyWith(pendingSyncCount: count);
+  }
 }
 
 final recitationProvider =
     StateNotifierProvider<RecitationNotifier, RecitationState>((ref) {
-      return RecitationNotifier();
-    });
+  return RecitationNotifier();
+});
