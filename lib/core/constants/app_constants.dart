@@ -43,6 +43,23 @@ class AppConstants {
     'graduated': 'خريح',
   };
 
+  // === Recitation days (Sat–Wed) ===
+  static const List<String> recitationDays = [
+    'السبت',
+    'الأحد',
+    'الإثنين',
+    'الثلاثاء',
+    'الأربعاء',
+  ];
+
+  static const List<String> recitationGrades = [
+    'ممتاز',
+    'جيد جداً',
+    'جيد',
+    'مقبول',
+    'ضعيف',
+  ];
+
   // === Attendance Status ===
   static const Map<String, String> attendanceStatus = {
     'present': 'حضر وسمّع',

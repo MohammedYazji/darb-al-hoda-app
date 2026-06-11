@@ -13,6 +13,7 @@ class RecitationLogModel {
   // optional - may  the student absent or don't recited
   final MemorizationRangeModel? newMemorization;
   final MemorizationRangeModel? revision;
+  final String? grade;
 
   // constructor
   const RecitationLogModel({
@@ -24,6 +25,7 @@ class RecitationLogModel {
     this.recordedBy,
     this.newMemorization,
     this.revision,
+    this.grade,
   });
 
   factory RecitationLogModel.fromJson(Map<String, dynamic> json) {
@@ -35,12 +37,12 @@ class RecitationLogModel {
       student: RecitationStudentModel.fromJson(json['student']),
       recordedBy: json['recorded_by'],
 
-      // new_memorization — optional
+      // new_memorization - optional
       newMemorization: json['new_memorization'] != null
           ? MemorizationRangeModel.fromJson(json['new_memorization'])
           : null,
 
-      // revision — optional
+      // revision - optional
       revision: json['revision'] != null
           ? MemorizationRangeModel.fromJson(json['revision'])
           : null,
@@ -71,16 +73,20 @@ class RecitationStudentModel {
 // range of the revision and the new memorization
 // one for both revision and new memo
 class MemorizationRangeModel {
-  final String fromSurah;
+  final int fromSurah;
   final int fromAyah;
-  final String toSurah;
+  final int toSurah;
   final int toAyah;
+  final String? fromSurahName;
+  final String? toSurahName;
 
   const MemorizationRangeModel({
     required this.fromSurah,
     required this.fromAyah,
     required this.toSurah,
     required this.toAyah,
+    this.fromSurahName,
+    this.toSurahName,
   });
 
   factory MemorizationRangeModel.fromJson(Map<String, dynamic> json) {
@@ -89,10 +95,21 @@ class MemorizationRangeModel {
       fromAyah: json['from_ayah'] ?? 0,
       toSurah: json['to_surah'] ?? '',
       toAyah: json['to_ayah'] ?? 0,
+      fromSurahName: json['from_surah_name'] as String?,
+      toSurahName: json['to_surah_name'] as String?,
     );
+  }
+
+  static int _surahNumber(dynamic value) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 
   // short way for clean UI
   // like "الكهف 1 - الكهف"
-  String get displayText => '$fromSurah $fromAyah — $toSurah $toAyah';
+  String get displayText {
+    final from = fromSurahName ?? fromSurah.toString();
+    final to = toSurahName ?? toSurah.toString();
+    return '$from $fromAyah - $to $toAyah';
+  }
 }

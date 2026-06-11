@@ -1,4 +1,5 @@
 import 'package:darb_al_hoda_app/core/utils/arabic_utils.dart';
+import 'package:darb_al_hoda_app/features/circle/presentation/screens/recitation_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -232,7 +233,16 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
       ),
       bottomNavigationBar: BottomNavBar(
         currentTab: _currentTab,
-        onTabSelected: (tab) => setState(() => _currentTab = tab),
+        onTabSelected: (tab) {
+          setState(() => _currentTab = tab);
+          // to allow the sheikh navigate into the recitation page
+          if (tab == NavTab.recitation) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const RecitationScreen()),
+            );
+          }
+        },
       ),
     );
   }

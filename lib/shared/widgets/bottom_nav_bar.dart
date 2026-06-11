@@ -55,10 +55,6 @@ class BottomNavBar extends ConsumerWidget {
       tabs.add(
         _buildTab(NavTab.recitation, Icons.menu_book_outlined, 'التسميع'),
       );
-      tabs.add(_buildTab(NavTab.students, Icons.people_outline, 'الطلاب'));
-      tabs.add(
-        _buildTab(NavTab.attendance, Icons.calendar_today_outlined, 'الحضور'),
-      );
     } else if (role == 'admin') {
       tabs.add(_buildTab(NavTab.admin, Icons.settings_outlined, 'المدير'));
     }
