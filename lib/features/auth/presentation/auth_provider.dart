@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:darb_al_hoda_app/core/constants/app_constants.dart';
 import 'package:darb_al_hoda_app/core/models/user_model.dart';
 import 'package:darb_al_hoda_app/core/network/dio_client.dart';
@@ -5,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+// === Auth State ===
 class AuthState {
   final bool isLoading; // is login is happening now
   final UserModel? user; // current user - or null
@@ -39,7 +41,8 @@ class AuthState {
       user != null && user!.hasMultipleRoles && activeRole == null;
 }
 
-// All auth actions with the api
+// === Auth Notifier ===
+// handles all auth actions with the api and local session recovery
 class AuthNotifier extends StateNotifier<AuthState> {
   final FlutterSecureStorage _storage;
   final Dio _dio;
@@ -61,14 +64,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
         data: {'email': email, 'password': password},
       );
 
-      // 3. save the toke using flutter storage
+      // 3. save the token using flutter storage
       final token = response.data['token'];
       await _storage.write(key: AppConstants.tokenKey, value: token);
 
       // 4. use the model to change the json into object
-      final user = UserModel.fromJson(response.data['user']);
+      final userJson = response.data['user'] as Map<String, dynamic>;
+      final user = UserModel.fromJson(userJson);
 
-      // 5. update the state
+      // 5. cache user JSON locally for offline startup
+      await _storage.write(
+        key: AppConstants.userKey,
+        value: jsonEncode(userJson),
+      );
+
+      // 6. update the state
       state = state.copyWith(
         isLoading: false,
         user: user,
@@ -76,7 +86,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
     } on DioException catch (e) {
       // Error from the API part
-      final message = e.response?.data['message'] ?? 'حدث خظا, حاول مجدداً';
+      final message = e.response?.data['message'] ?? 'حدث خطأ, حاول مجدداً';
       state = state.copyWith(isLoading: false, error: message);
     }
   }
@@ -93,32 +103,38 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       await _dio.post('/auth/logout');
     } catch (_) {}
-    // clear the storage
+    // clear all storage including cached user data
     await _storage.deleteAll();
-    // return the state into the default values agin
+    // return the state into the default values again
     state = const AuthState();
   }
 
-  // === Check if we have saved session ===
-  // look for session when open the app
-  // if we go out the app without logout
+  // === Check Session ===
+  // called when opening the app — restores session without login
   Future<void> checkSession() async {
-    // 0. get the token from the storage
+    // 0. check if we have a stored token
     final token = await _storage.read(key: AppConstants.tokenKey);
-    if (token == null) return; // do nothing
+    if (token == null) return; // no session at all
 
-    // 1. update the state while fetching the userdata
+    // 1. show loading while resolving session
     state = state.copyWith(isLoading: true);
 
     try {
-      // 2. fetch the user data from the API
+      // 2. fetch fresh user data from the API (requires internet)
       final response = await _dio.get('/auth/me');
-      final user = UserModel.fromJson(response.data);
+      final userJson = response.data as Map<String, dynamic>;
+      final user = UserModel.fromJson(userJson);
 
-      // 3. fetch the user role
+      // 3. update local user cache with fresh data
+      await _storage.write(
+        key: AppConstants.userKey,
+        value: jsonEncode(userJson),
+      );
+
+      // 4. fetch the stored active role
       final activeRole = await _storage.read(key: AppConstants.activeRoleKey);
 
-      // 4. mutate the state again
+      // 5. restore full session state
       state = state.copyWith(
         isLoading: false,
         user: user,
@@ -126,7 +142,32 @@ class AuthNotifier extends StateNotifier<AuthState> {
             activeRole ?? (user.hasMultipleRoles ? null : user.roles.first),
       );
     } catch (_) {
-      // if the token expired so logout
+      // API call failed — offline or token expired.
+      // Try to restore from locally cached user JSON first.
+      final cachedJson = await _storage.read(key: AppConstants.userKey);
+
+      if (cachedJson != null) {
+        try {
+          final userJson = jsonDecode(cachedJson) as Map<String, dynamic>;
+          final user = UserModel.fromJson(userJson);
+          final activeRole = await _storage.read(
+            key: AppConstants.activeRoleKey,
+          );
+
+          // Offline but valid cache → restore full session
+          state = state.copyWith(
+            isLoading: false,
+            user: user,
+            activeRole:
+                activeRole ?? (user.hasMultipleRoles ? null : user.roles.first),
+          );
+          return;
+        } catch (_) {
+          // Cached data is corrupt — fall through to logout
+        }
+      }
+
+      // No cache or corrupt → token is invalid, log out cleanly
       await logout();
     }
   }
