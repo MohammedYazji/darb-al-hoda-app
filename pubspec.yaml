@@ -1,5 +1,5 @@
 name: darb_al_hoda_app
-description: "A new Flutter project."
+description: "Quran Memorization Center System"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
@@ -42,6 +42,14 @@ dependencies:
 
   # Utils
   intl: ^0.19.0
+
+  # Local Storage (offline-first recitation logs)
+  sqflite: ^2.4.1
+  path: ^1.9.0
+  path_provider: ^2.1.5
+
+  # Connectivity (detect online/offline for sync)
+  connectivity_plus: ^6.1.4
 
 dev_dependencies:
   flutter_test:
