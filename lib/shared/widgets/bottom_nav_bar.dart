@@ -5,7 +5,7 @@ import 'package:darb_al_hoda_app/features/auth/presentation/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum NavTab { home, students, circles, attendance, admin, recitation }
+enum NavTab { home, students, circles, attendance, admin, recitation, settings }
 
 class BottomNavBar extends ConsumerWidget {
   final NavTab currentTab;
@@ -62,6 +62,9 @@ class BottomNavBar extends ConsumerWidget {
     } else if (role == 'admin') {
       tabs.add(_buildTab(NavTab.admin, Icons.settings_outlined, 'المدير'));
     }
+
+    // Settings for all users
+    tabs.add(_buildTab(NavTab.settings, Icons.tune_outlined, 'الإعدادات'));
 
     return tabs;
   }

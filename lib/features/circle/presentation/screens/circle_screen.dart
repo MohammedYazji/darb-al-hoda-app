@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/models/circle_model.dart';
 import '../../../../features/auth/presentation/auth_provider.dart';
+import '../../../../features/auth/presentation/screens/settings_screen.dart';
 import '../../../../shared/widgets/bottom_nav_bar.dart';
 import '../circle_provider.dart';
 
@@ -238,6 +239,10 @@ class _CircleScreenState extends ConsumerState<CircleScreen> {
 
   // === Body ===
   Widget _buildBody(CircleState circleState) {
+    if (_currentTab == NavTab.settings) {
+      return const SettingsScreen();
+    }
+
     if (circleState.isLoading) {
       return const Center(
         child: CircularProgressIndicator(color: AppColors.primary),

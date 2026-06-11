@@ -3,10 +3,10 @@ import 'package:darb_al_hoda_app/core/constants/app_text_styles.dart';
 import 'package:darb_al_hoda_app/core/models/dashboard_model.dart';
 import 'package:darb_al_hoda_app/core/utils/arabic_utils.dart';
 import 'package:darb_al_hoda_app/features/auth/presentation/auth_provider.dart';
+import 'package:darb_al_hoda_app/features/auth/presentation/screens/settings_screen.dart';
 import 'package:darb_al_hoda_app/features/dashboard/presentation/dashboard_provider.dart';
 import 'package:darb_al_hoda_app/shared/widgets/bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -48,6 +48,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildBody(DashboardState dashState, AuthState authState) {
+    // 0. check if settings tab is selected
+    if (_currentTab == NavTab.settings) {
+      return const SettingsScreen();
+    }
+
     // if still fetching dashboard data
     if (dashState.isLoading) {
       return const Center(
