@@ -18,4 +18,15 @@ class ArabicUtils {
 
   // to handle double directly
   static String fromDouble(int number) => toArabic(number.toString());
+
+  static int? parseInt(String input) {
+    var s = input.trim();
+    if (s.isEmpty) return null;
+    const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    const arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    for (var i = 0; i < english.length; i++) {
+      s = s.replaceAll(arabic[i], english[i]);
+    }
+    return int.tryParse(s);
+  }
 }
