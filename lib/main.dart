@@ -1,4 +1,5 @@
 import 'package:darb_al_hoda_app/core/constants/app_colors.dart';
+import 'package:darb_al_hoda_app/features/admin/presentation/screens/admin_screen.dart';
 import 'package:darb_al_hoda_app/features/auth/presentation/screens/role_selection_screen.dart';
 import 'package:darb_al_hoda_app/features/circle/presentation/screens/circle_screen.dart';
 import 'package:darb_al_hoda_app/features/dashboard/presentation/screens/dashboard_screen.dart';
@@ -82,7 +83,7 @@ class _DarbAlHodaAppState extends ConsumerState<DarbAlHodaApp> {
       case 'circle_sheikh':
         return const CircleScreen();
       case 'admin':
-        return const DashboardScreen(); // TODO: AdminScreen
+        return const AdminScreen();
       default:
         return const DashboardScreen();
     }
