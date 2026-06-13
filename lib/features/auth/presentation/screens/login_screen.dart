@@ -127,17 +127,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // center the content
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Logo Circle Background
+        // Logos
         Container(
           width: 96,
           height: 96,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              colors: [AppColors.gold, Color(0xFFa68832)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: Colors.white,
             border: Border.all(
               color: AppColors.primary.withOpacity(0.5),
               width: 4,
@@ -150,10 +146,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ],
           ),
-          child: const Center(
-            child: Text(
-              '☽', // TODO: change the icon with the real icon of darb-al-hoda
-              style: TextStyle(fontSize: 48, color: AppColors.primary),
+          child: ClipOval(
+            child: Image.asset(
+              'assets/images/logo.png',
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) =>
+                  const Icon(Icons.mosque, size: 48, color: AppColors.primary),
             ),
           ),
         ),
