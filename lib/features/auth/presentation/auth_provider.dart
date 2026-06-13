@@ -53,7 +53,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       super(const AuthState());
 
   // === Login ===
-  Future<void> login(String email, String password) async {
+  Future<void> login(String uniqueNumber, String password) async {
     // 1. mutate the state to loading
     state = state.copyWith(isLoading: true, error: null);
 
@@ -61,7 +61,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // 2. send the request to the api
       final response = await _dio.post(
         '/auth/login',
-        data: {'email': email, 'password': password},
+        data: {'unique_number': uniqueNumber, 'password': password},
       );
 
       // 3. save the token using flutter storage

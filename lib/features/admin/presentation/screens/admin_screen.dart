@@ -1,11 +1,12 @@
+import 'package:darb_al_hoda_app/core/constants/app_colors.dart';
+import 'package:darb_al_hoda_app/core/constants/app_text_styles.dart';
 import 'package:darb_al_hoda_app/core/utils/arabic_utils.dart';
+import 'package:darb_al_hoda_app/features/auth/presentation/screens/settings_screen.dart';
+import 'package:darb_al_hoda_app/shared/widgets/bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
-import '../../../../features/auth/presentation/screens/settings_screen.dart';
-import '../../../../shared/widgets/bottom_nav_bar.dart';
 import '../admin_provider.dart';
+import 'user_registration_screen.dart';
 
 // === Admin Panel - main dashboard for center managers ===
 class AdminScreen extends ConsumerStatefulWidget {
@@ -17,24 +18,38 @@ class AdminScreen extends ConsumerStatefulWidget {
 
 class _AdminScreenState extends ConsumerState<AdminScreen> {
   NavTab _currentTab = NavTab.admin;
-  bool _reportRequested =
-      false; // tracks if the monthly report request was sent
+  bool _reportRequested = false;
 
   @override
   void initState() {
     super.initState();
-    // fetch dashboard data immediately when the screen opens
     Future.microtask(() => ref.read(adminProvider.notifier).fetchDashboard());
   }
 
   @override
   Widget build(BuildContext context) {
-    // if the user switched to settings tab show settings screen instead
-    if (_currentTab == NavTab.settings) {
-      return const SettingsScreen();
+    if (_currentTab == NavTab.userManagement) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF9F5EF),
+        body: const UserRegistrationScreen(),
+        bottomNavigationBar: BottomNavBar(
+          currentTab: _currentTab,
+          onTabSelected: (tab) => setState(() => _currentTab = tab),
+        ),
+      );
     }
 
-    // keep watch the admin data to listen for any update
+    if (_currentTab == NavTab.settings) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF9F5EF),
+        body: const SettingsScreen(),
+        bottomNavigationBar: BottomNavBar(
+          currentTab: _currentTab,
+          onTabSelected: (tab) => setState(() => _currentTab = tab),
+        ),
+      );
+    }
+
     final adminState = ref.watch(adminProvider);
 
     return Scaffold(
@@ -300,10 +315,18 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
         Row(
           children: [
             Expanded(
-              child: _buildActionCard(
-                'تسجيل مستخدم جديد',
-                Icons.people_outline,
-                AppColors.primary,
+              child: GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const UserRegistrationScreen(),
+                  ),
+                ),
+                child: _buildActionCard(
+                  'تسجيل مستخدم جديد',
+                  Icons.people_outline,
+                  AppColors.primary,
+                ),
               ),
             ),
             const SizedBox(width: 8),

@@ -13,7 +13,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   // Control the inputs values
-  final _emailController = TextEditingController();
+  final _uniqueNumberController = TextEditingController();
   final _passwordController = TextEditingController();
 
   // to validate from the form key
@@ -25,7 +25,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void dispose() {
     // When leave the page clean the fields
-    _emailController.dispose();
+    _uniqueNumberController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -39,7 +39,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     await ref
         .read(authProvider.notifier)
         .login(
-          _emailController.text.trim(), // remove the spaces
+          _uniqueNumberController.text.trim(), // remove the spaces
           _passwordController.text,
         );
   }
@@ -207,17 +207,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // === Email field ===
+            // === Unique Number Field===
             _buildLabel('اسم المستخدم'),
             const SizedBox(height: 6),
             TextFormField(
               controller:
-                  _emailController, // link field with controller to track the value
+                  _uniqueNumberController, // link field with controller to track the value
               keyboardType: TextInputType
-                  .emailAddress, // show the keyboard to easy typing of the email
+                  .text, // show the keyboard to easy typing of the unique id
               style: AppTextStyles.bodyMedium,
               decoration: InputDecoration(
-                hintText: 'أدخل البريد الإلكتروني',
+                hintText: 'أدخل إسم المستخدم',
                 filled: true,
                 fillColor: Colors.grey.shade50,
                 border: OutlineInputBorder(
@@ -241,7 +241,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               // validat fields
               validator: (value) {
                 if (value == null || value.isEmpty) return 'مطلوب';
-                if (!value.contains('@')) return 'بريد غير صحيح';
                 return null; // no errors
               },
             ),

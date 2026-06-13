@@ -5,7 +5,7 @@ import 'package:darb_al_hoda_app/features/auth/presentation/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum NavTab { home, students, circles, attendance, admin, recitation, settings }
+enum NavTab { home, students, circles, attendance, admin, recitation, settings, userManagement }
 
 class BottomNavBar extends ConsumerWidget {
   final NavTab currentTab;
@@ -46,17 +46,18 @@ class BottomNavBar extends ConsumerWidget {
   }
 
   List<Widget> _buildTabsForRole(String? role) {
-    final tabs = <Widget>[
-      _buildTab(NavTab.home, Icons.dashboard_outlined, 'الرئيسية'),
-    ];
+    final isAdmin = role == 'admin';
+    final tabs = <Widget>[];
 
-    if (role == 'circle_sheikh' || role == 'recitation_sheikh') {
-      tabs.add(_buildTab(NavTab.circles, Icons.groups_outlined, 'الحلقة'));
-      tabs.add(
-        _buildTab(NavTab.recitation, Icons.menu_book_outlined, 'التسميع'),
-      );
-    } else if (role == 'admin') {
-      tabs.add(_buildTab(NavTab.admin, Icons.settings_outlined, 'المدير'));
+    if (isAdmin) {
+      tabs.add(_buildTab(NavTab.admin, Icons.dashboard_outlined, 'المدير'));
+      tabs.add(_buildTab(NavTab.userManagement, Icons.people_outline, 'المستخدمين'));
+    } else {
+      tabs.add(_buildTab(NavTab.home, Icons.dashboard_outlined, 'الرئيسية'));
+      if (role == 'circle_sheikh' || role == 'recitation_sheikh') {
+        tabs.add(_buildTab(NavTab.circles, Icons.groups_outlined, 'الحلقة'));
+        tabs.add(_buildTab(NavTab.recitation, Icons.menu_book_outlined, 'التسميع'));
+      }
     }
 
     // Settings for all users
